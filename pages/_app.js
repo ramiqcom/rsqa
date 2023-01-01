@@ -1,13 +1,7 @@
 import '../styles/globals.css';
-import 'react-calendar/dist/Calendar.css';
 import 'react-range-slider-input/dist/style.css';
-import { NextUIProvider } from '@nextui-org/react'
 
-export default function App({ Component, pageProps }) {
-  return (
-    // 2. Use at the root of your app
-    <NextUIProvider>
-      <Component {...pageProps} />
-    </NextUIProvider>
-  );
+// This default export is required in a new `pages/_app.js` file.
+export default function MyApp({ Component, pageProps }) {
+  return <Component {...pageProps} />
 }
