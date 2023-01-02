@@ -3,37 +3,22 @@
 export default async function handler(req, res){
     // Import module and key
     const ee = require('@google/earthengine');
-    const privateKey = require('../api/privateKey.json');
 
     // Variable list
-    const body = JSON.parse(req.body);
-    const type = body.type;
-    const geometry = body.geojson;
-    const startDate = body.startDate;
-    const endDate = body.endDate;
-    const startRange = body.dateRangePair[0];
-    const endRange = body.dateRangePair[1];
-    const cloudFilter = Number(body.cloudFilter);
-    const cloudMasking = body.cloudMasking;
+    const body = await JSON.parse(req.body);
+    const type = await body.type;
+    const geometry = await body.geojson;
+    const startDate = await body.startDate;
+    const endDate = await body.endDate;
+    const startRange = await body.dateRangePair[0];
+    const endRange = await body.dateRangePair[1];
+    const cloudFilter = Number(await body.cloudFilter);
+    const cloudMasking = await body.cloudMasking;
 
-    // Authentication
-    ee.data.authenticateViaPrivateKey(
-        privateKey, () => {
-        console.log('Authentication success');
-        ee.initialize(
-            null, 
-            null, 
-            () => {
-            console.log('Initialization success');
-            init();
-            },
-        (err) => console.log(err));
-        }, 
-        (err) => console.log(err)
-    );
+    await init();
 
     // Init function
-    function init(){
+    async function init(){
         let geom;
 
         if (type == 'Bounds') {
@@ -43,7 +28,7 @@ export default async function handler(req, res){
         }
 
         const col = ee.ImageCollection("COPERNICUS/S2_SR");
-        let images = col.filterBounds(geom)
+        let images = await col.filterBounds(geom)
             .filterDate(startDate, endDate)
             .filter(ee.Filter.dayOfYear(startRange, endRange))
             .filter(ee.Filter.lte('CLOUDY_PIXEL_PERCENTAGE', cloudFilter));
