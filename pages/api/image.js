@@ -3,6 +3,7 @@
 export default async function handler(req, res){
     // Import module and key
     const ee = require('@google/earthengine');
+    const privateKey = require('../api/privateKey.json');
 
     // Variable list
     const body = await JSON.parse(req.body);
@@ -15,10 +16,24 @@ export default async function handler(req, res){
     const cloudFilter = Number(await body.cloudFilter);
     const cloudMasking = await body.cloudMasking;
 
-    await init();
+    // Authentication
+    ee.data.authenticateViaPrivateKey(
+        privateKey, () => {
+        console.log('Authentication success');
+        ee.initialize(
+            null, 
+            null, 
+            () => {
+            console.log('Initialization success');
+            init();
+            },
+        (err) => console.log(err));
+        }, 
+        (err) => console.log(err)
+    );
 
     // Init function
-    async function init(){
+    function init(){
         let geom;
 
         if (type == 'Bounds') {
@@ -28,7 +43,7 @@ export default async function handler(req, res){
         }
 
         const col = ee.ImageCollection("COPERNICUS/S2_SR");
-        let images = await col.filterBounds(geom)
+        let images = col.filterBounds(geom)
             .filterDate(startDate, endDate)
             .filter(ee.Filter.dayOfYear(startRange, endRange))
             .filter(ee.Filter.lte('CLOUDY_PIXEL_PERCENTAGE', cloudFilter));
