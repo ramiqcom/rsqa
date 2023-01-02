@@ -8,6 +8,10 @@ export default async function handler(req, res){
     // Variable list
     const body = await JSON.parse(req.body);
     const type = await body.type;
+    const imageCol = await body.imageCol;
+    const red = await body.bandRed;
+    const green = await body.bandGreen;
+    const blue = await body.bandBlue;
     const geometry = await body.geojson;
     const startDate = await body.startDate;
     const endDate = await body.endDate;
@@ -60,7 +64,7 @@ export default async function handler(req, res){
                 'system:time_end': ee.Date(endDate)
             });
         
-        const bands = ['B8', 'B11', 'B2'];
+        const bands = [red, green, blue];
 
         const vis = mapVis(image, bands);
 
