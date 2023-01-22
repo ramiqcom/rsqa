@@ -37,7 +37,7 @@ export default function handler(req, res){
     );
 
     // Init function
-    async function init(){
+    function init(){
         let aoi;
 
         // Create a feature collection
@@ -75,30 +75,22 @@ export default function handler(req, res){
         
         // Bands for visualization
         const bands = [red, green, blue]
-
+        
         // Visualization parameter
-        const vis = await mapVis(image, bands).getInfo();
-        
-        // Map parameter to send to client
-        const mapParam = await image.getMap(vis);
-    
-        // JSON of AOI
-        const aoiJson = await aoi.getInfo();
-        mapParam.aoi = aoiJson;
-        
-        // Image download id
-        const thumbUrl = await image.getThumbURL({
-            dimensions: '800',
-            region: geom,
-            format: 'jpg',
-            bands: bands,
-            min: vis.min,
-            max: vis.max,
-        });
-        mapParam.thumb = thumbUrl;
+        const vis = mapVis(image, bands);
 
-        // Send data to client
-        res.status(202).send(mapParam);
+        // Callback hell to send data to server
+        vis.evaluate(vis => 
+            image.getMap(vis, map => 
+                aoi.evaluate(aoi => 
+                    image.getThumbURL({ dimensions: '540', region: geom, format: 'jpg', bands: bands, min: vis.min, max: vis.max }, thumb => {
+                        map.aoi = aoi;
+                        map.thumb = thumb;
+                        res.status(202).send(map);
+                    })                        
+                )
+            )
+        );
     }
 
     // Cloud masking function
