@@ -1,33 +1,41 @@
 // Convert shp to geojson
 
-const formidable = require('formidable');
+// Import module
+import * as turf from '@turf/turf';
 const shapefileToGeojson = require("shapefile-to-geojson");
+const formidable = require('formidable');
 const fs = require('fs');
 const decompress = require('decompress');
 
 // Disabled body parser
 export const config = {
 	api: {
-	  bodyParser: false,
-    responseLimit: false,
+    bodyParser: false,
+    responseLimit: '8mb',
 	}
 };
 
 // Main function for API
-export default async function handler(req, res){
-	const form = new formidable.IncomingForm();
+export default function handler(req, res){
+  const form = new formidable.IncomingForm();
 
-  form.parse(req, async (err, fields, files) => {
-    const path = await files.file.filepath;
-    const newPath = path+'.zip';
+  form.parse(req, (err, fields, files) => {
+    const path = files.file.filepath;
+    const newPath = path + '.zip';
 
     fs.rename(path, newPath, (err) => {
       decompress(newPath, path)
-        .then(async (files) => {
+        .then(async () => {
+          const geojson = await shapefileToGeojson.parseFolder(path);
 
-          let geojson = await shapefileToGeojson.parseFolder(path);
-          return res.send(await geojson);
+          geojson.features.map(data => data.properties = null);
+          let simplify = turf.simplify(geojson, {tolerance: 0.001, mutate: true});
 
+          if (simplify.features.length > 1) {
+            simplify = turf.dissolve(simplify)
+          }
+
+          res.status(200).send(simplify);
         });
     })
   });

@@ -1,24 +1,24 @@
 // Earth engine app
 
-export default async function handler(req, res){
+export default function handler(req, res){
     // Import module and key
     const ee = require('@google/earthengine');
     const privateKey = require('../api/privateKey.json');
 
     // Variable list
-    const body = await JSON.parse(req.body);
-    const type = await body.type;
-    const imageCol = await body.imageCol;
-    const red = await body.bandRed;
-    const green = await body.bandGreen;
-    const blue = await body.bandBlue;
-    const geometry = await body.geojson;
-    const startDate = await body.startDate;
-    const endDate = await body.endDate;
-    const startRange = await body.dateRangePair[0];
-    const endRange = await body.dateRangePair[1];
-    const cloudFilter = Number(await body.cloudFilter);
-    const cloudMasking = await body.cloudMasking;
+    const body = JSON.parse(req.body);
+    const type = body.type;
+    const imageCol = body.imageCol;
+    const red = body.bandRed;
+    const green = body.bandGreen;
+    const blue = body.bandBlue;
+    const geometry = body.geojson;
+    const startDate = body.startDate;
+    const endDate = body.endDate;
+    const startRange = Number(body.dateRangePair[0]);
+    const endRange = Number(body.dateRangePair[1]);
+    const cloudFilter = Number(body.cloudFilter);
+    const cloudMasking = body.cloudMasking;
 
     // Authentication
     ee.data.authenticateViaPrivateKey(
@@ -68,11 +68,9 @@ export default async function handler(req, res){
 
         const vis = mapVis(image, bands);
 
-        vis.evaluate((parameter) => {
-            image.getMap(parameter, (data) => {
-                res.status(202);
-                res.send(data);
-                res.end();
+        vis.evaluate(parameter => {
+            image.getMap(parameter, data => {
+                res.status(202).send(data);
             });
         })
     }
