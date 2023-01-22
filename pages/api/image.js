@@ -82,13 +82,10 @@ export default function handler(req, res){
         // Callback hell to send data to server
         vis.evaluate(vis => 
             image.getMap(vis, map => 
-                aoi.evaluate(aoi => 
-                    image.getThumbURL({ dimensions: '540', region: geom, format: 'jpg', bands: bands, min: vis.min, max: vis.max }, thumb => {
-                        map.aoi = aoi;
-                        map.thumb = thumb;
-                        res.status(202).send(map);
-                    })                        
-                )
+                aoi.evaluate(aoi =>{
+                    map.aoi = aoi;
+                    res.status(202).send(map); 
+                })
             )
         );
     }
