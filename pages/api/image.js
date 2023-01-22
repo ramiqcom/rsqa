@@ -37,25 +37,34 @@ export default function handler(req, res){
     );
 
     // Init function
-    function init(){
-        let geom;
+    async function init(){
+        let aoi;
 
+        // Create a feature collection
         if (type == 'Bounds') {
-            geom = ee.Geometry.BBox(geometry.west, geometry.south, geometry.east, geometry.north);
+            aoi = ee.FeatureCollection(ee.Geometry.BBox(geometry.west, geometry.south, geometry.east, geometry.north));
         } else {
-            geom = ee.FeatureCollection(geometry).geometry();
+            aoi = ee.FeatureCollection(geometry);
         }
 
+        // AOI for filter and clip
+        const geom = aoi.geometry();
+
+        // Imagery collection
         const col = ee.ImageCollection("COPERNICUS/S2_SR");
+
+        // Filter the image collection
         let images = col.filterBounds(geom)
             .filterDate(startDate, endDate)
             .filter(ee.Filter.dayOfYear(startRange, endRange))
             .filter(ee.Filter.lte('CLOUDY_PIXEL_PERCENTAGE', cloudFilter));
 
+        // Cloud masking
         if (cloudMasking) {
             images = images.map(cloudMask);
         }
         
+        // Composite the image
         const image = images.median()
             .select(['B.*'])
             .clip(geom)
@@ -64,15 +73,32 @@ export default function handler(req, res){
                 'system:time_end': ee.Date(endDate)
             });
         
-        const bands = [red, green, blue];
+        // Bands for visualization
+        const bands = [red, green, blue]
 
-        const vis = mapVis(image, bands);
+        // Visualization parameter
+        const vis = await mapVis(image, bands).getInfo();
+        
+        // Map parameter to send to client
+        const mapParam = await image.getMap(vis);
+    
+        // JSON of AOI
+        const aoiJson = await aoi.getInfo();
+        mapParam.aoi = aoiJson;
+        
+        // Image download id
+        const thumbUrl = await image.getThumbURL({
+            dimensions: '800',
+            region: geom,
+            format: 'jpg',
+            bands: bands,
+            min: vis.min,
+            max: vis.max,
+        });
+        mapParam.thumb = thumbUrl;
 
-        vis.evaluate(parameter => {
-            image.getMap(parameter, data => {
-                res.status(202).send(data);
-            });
-        })
+        // Send data to client
+        res.status(202).send(mapParam);
     }
 
     // Cloud masking function

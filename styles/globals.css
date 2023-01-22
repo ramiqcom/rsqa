@@ -26,5 +26,10 @@
 .section {
     border: 1px solid black;
     padding: 2%;
-    margin: 2% auto;
+    margin: 
+    2% auto;
+}
+
+.info {
+    margin: 5%;
 }
