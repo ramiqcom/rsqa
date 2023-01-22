@@ -82,10 +82,7 @@ export default function handler(req, res){
         // Callback hell to send data to server
         vis.evaluate(vis => 
             image.getMap(vis, map => 
-                aoi.evaluate(aoi =>{
-                    map.aoi = aoi;
-                    res.status(202).send(map); 
-                })
+                res.status(202).send(map) 
             )
         );
     }
