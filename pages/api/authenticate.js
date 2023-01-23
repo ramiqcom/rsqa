@@ -1,7 +1,7 @@
-import ee from '@google/earthengine';
-import privateKey from './privateKey.json';
-
 export default function handler(req, res){
+    const ee = require('@google/earthengine');
+    const privateKey = require('./privateKey.json');
+
     // Authentication
     ee.data.authenticateViaPrivateKey(
         privateKey, () => {
