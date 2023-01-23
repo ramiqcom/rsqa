@@ -1,10 +1,8 @@
+// Import module
+import ee from '@google/earthengine';
+
 // Earth engine app
-
 export default function handler(req, res){
-    // Import module and key
-    const ee = require('@google/earthengine');
-    const privateKey = require('../api/privateKey.json');
-
     // Variable list
     const body = JSON.parse(req.body);
     const type = body.type;
@@ -20,21 +18,7 @@ export default function handler(req, res){
     const cloudFilter = Number(body.cloudFilter);
     const cloudMasking = body.cloudMasking;
 
-    // Authentication
-    ee.data.authenticateViaPrivateKey(
-        privateKey, () => {
-        console.log('Authentication success');
-        ee.initialize(
-            null, 
-            null, 
-            () => {
-            console.log('Initialization success');
-            init();
-            },
-        (err) => console.log(err));
-        }, 
-        (err) => console.log(err)
-    );
+    init();
 
     // Init function
     function init(){
