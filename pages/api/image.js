@@ -1,29 +1,43 @@
 // Import module
 import ee from '@google/earthengine';
+import privateKey from './privateKey.json';
 
 // Earth engine app
 export default function handler(req, res){
-    // Variable list
-    const body = JSON.parse(req.body);
-    const type = body.type;
-    const imageCol = body.imageCol;
-    const red = body.bandRed;
-    const green = body.bandGreen;
-    const blue = body.bandBlue;
-    const geometry = body.geojson;
-    const startDate = body.startDate;
-    const endDate = body.endDate;
-    const startRange = Number(body.dateRangePair[0]);
-    const endRange = Number(body.dateRangePair[1]);
-    const cloudFilter = Number(body.cloudFilter);
-    const cloudMasking = body.cloudMasking;
-
-    init();
+    // Authentication
+    ee.data.authenticateViaPrivateKey(
+        privateKey, () => {
+        console.log('Authentication success');
+        ee.initialize(
+            null, 
+            null, 
+            () => {
+            console.log('Initialization success');
+            init();
+            },
+        (err) => console.log(err));
+        }, 
+        (err) => console.log(err)
+    );
 
     // Init function
     function init(){
-        let aoi;
+        // Variable list
+        const body = JSON.parse(req.body);
+        const type = body.type;
+        const imageCol = body.imageCol;
+        const red = body.bandRed;
+        const green = body.bandGreen;
+        const blue = body.bandBlue;
+        const geometry = body.geojson;
+        const startDate = body.startDate;
+        const endDate = body.endDate;
+        const startRange = Number(body.dateRangePair[0]);
+        const endRange = Number(body.dateRangePair[1]);
+        const cloudFilter = Number(body.cloudFilter);
+        const cloudMasking = body.cloudMasking;
 
+        let aoi;
         // Create a feature collection
         if (type == 'Bounds') {
             aoi = ee.FeatureCollection(ee.Geometry.BBox(geometry.west, geometry.south, geometry.east, geometry.north));
