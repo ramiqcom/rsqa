@@ -70,7 +70,7 @@ export default function handler(req, res){
                 'system:time_start': ee.Date(startDate),
                 'system:time_end': ee.Date(endDate)
             });
-        
+
         // Bands for visualization
         const bands = [red, green, blue]
         
@@ -80,7 +80,7 @@ export default function handler(req, res){
         // Callback hell to send data to server
         vis.evaluate(vis => 
             image.getMap(vis, map => 
-                res.status(202).send(map) 
+                res.status(202).send(map)
             )
         );
     }
