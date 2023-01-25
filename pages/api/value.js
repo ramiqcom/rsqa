@@ -22,7 +22,19 @@ export default function handler(req, res){
 
     // Init function
     function init(){
-        const serial = JSON.parse(req.body);
-        console.log(serial);
+        const json = JSON.parse(req.body);
+
+        const latlng = JSON.parse(json.point);
+        const point = ee.Geometry.Point([latlng.lng, latlng.lat]);
+
+        const image = ee.Image(ee.Deserializer.fromJSON(JSON.parse(json.image)));
+
+        const reduce = image.reduceRegion({
+            geometry: point,
+            scale: 10,
+            reducer: ee.Reducer.first(),
+        })
+
+        reduce.evaluate(values => res.status(202).send(values));
     }
 }

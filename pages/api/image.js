@@ -69,7 +69,10 @@ export default function handler(req, res){
             .set({
                 'system:time_start': ee.Date(startDate),
                 'system:time_end': ee.Date(endDate)
-            });
+            })
+            .setDefaultProjection('EPSG:4326', null , 10);
+        
+        const serial = ee.Serializer.toJSON(image);
 
         // Bands for visualization
         const bands = [red, green, blue]
@@ -79,8 +82,10 @@ export default function handler(req, res){
 
         // Callback hell to send data to server
         vis.evaluate(vis => 
-            image.getMap(vis, map => 
-                res.status(202).send(map)
+            image.getMap(vis, map => { 
+                    map.image = JSON.stringify(serial);
+                    res.status(202).send(map);
+                }
             )
         );
     }
