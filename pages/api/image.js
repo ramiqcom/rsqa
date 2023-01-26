@@ -23,7 +23,7 @@ export default function handler(req, res){
     // Init function
     function init(){
         // Variable list
-        const body = JSON.parse(req.body);
+        const body = req.body;
         const type = body.type;
         const imageCol = body.imageCol;
         const red = body.bandRed;

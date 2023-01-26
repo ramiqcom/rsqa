@@ -22,13 +22,12 @@ export default function handler(req, res){
 
     // Init function
     function init(){
-        const json = JSON.parse(req.body);
+        const json = req.body;
 
-        const latlng = JSON.parse(json.point);
+        const latlng = json.point;
         const point = ee.Geometry.Point([latlng.lng, latlng.lat]);
 
         const image = ee.Image(ee.Deserializer.fromJSON(JSON.parse(json.image)));
-
         const reduce = image.reduceRegion({
             geometry: point,
             scale: 10,
