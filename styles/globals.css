@@ -10,6 +10,13 @@
     line-height: normal;
 }
 
+.frame {
+    background-color: whitesmoke;
+    color: #696969;
+    height: 4%;
+    display: block;
+}
+
 .column {
     display: flex;
 }
@@ -32,4 +39,21 @@
 
 .info {
     padding: 5%;
+}
+
+#main {
+    height: 92%;
+}
+
+#header {
+    font-size: x-large;
+    font-weight: 600;
+    border-bottom: 1px solid gray;
+}
+
+#footer {
+    font-size: medium;
+    font-weight: 200;
+    border-top: 1px solid #696969;
+    text-align: center;
 }
