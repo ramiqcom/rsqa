@@ -37,57 +37,41 @@ export default function handler(req, res){
         const cloudFilter = Number(body.cloudFilter);
         const cloudMasking = body.cloudMasking;
 
+        // AOI
         let aoi;
-        // Create a feature collection
         if (type == 'Bounds') {
-            aoi = ee.FeatureCollection(ee.Geometry.BBox(geometry.west, geometry.south, geometry.east, geometry.north));
+            aoi = ee.FeatureCollection(ee.Geometry.BBox(geometry.west, geometry.south, geometry.east, geometry.north)).geometry();
         } else {
-            aoi = ee.FeatureCollection(geometry);
+            aoi = ee.FeatureCollection(geometry).geometry();
         }
 
-        // AOI for filter and clip
-        const geom = aoi.geometry();
-
-        // Imagery collection
-        const col = ee.ImageCollection("COPERNICUS/S2_SR");
-
-        // Filter the image collection
-        let images = col.filterBounds(geom)
-            .filterDate(startDate, endDate)
-            .filter(ee.Filter.dayOfYear(startRange, endRange))
-            .filter(ee.Filter.lte('CLOUDY_PIXEL_PERCENTAGE', cloudFilter));
-
-        // Cloud masking
-        if (cloudMasking) {
-            images = images.map(cloudMask);
-        }
-        
-        // Composite the image
-        const image = images.median()
-            .select(['B.*'])
-            .clip(geom)
-            .set({
-                'system:time_start': ee.Date(startDate),
-                'system:time_end': ee.Date(endDate)
-            })
-            .setDefaultProjection('EPSG:4326', null , 10);
-        
-        const serial = ee.Serializer.toJSON(image);
-
-        // Bands for visualization
-        const bands = [red, green, blue]
-        
         // Visualization parameter
-        const vis = mapVis(image, bands);
-
-        // Callback hell to send data to server
-        vis.evaluate(vis => 
-            image.getMap(vis, map => { 
-                    map.image = JSON.stringify(serial);
-                    res.status(202).send(map);
-                }
+        new Promise(resolve => resolve(ee.ImageCollection("COPERNICUS/S2_SR")
+            .filter(ee.Filter.and(
+                ee.Filter.bounds(aoi),
+                ee.Filter.date(startDate, endDate),
+                ee.Filter.dayOfYear(startRange, endRange),
+                ee.Filter.lte('CLOUDY_PIXEL_PERCENTAGE', cloudFilter))
+            ))
+        )
+            .then(col => cloudMasking ? col.map(cloudMask) : col)
+            .then(col => col
+                .median()
+                .select(['B.*'])
+                .clip(aoi)
+                .set('system:time_start', ee.Date(startDate), 'system:time_end', ee.Date(endDate))
+                .setDefaultProjection('EPSG:4326', null, 30)
             )
-        );
+            .then(image => [ image, mapVis(image, [red, green, blue]) ])
+            .then(data => {
+                const image = data[0];
+                const vis = data[1];
+                vis.evaluate(vis => image.getMap(vis, map => {
+                    map.image = JSON.stringify(ee.Serializer.toJSON(image))
+                    res.status(200).send(map)
+                }))
+            })
+            .catch(err => res.status(404).send(err))
     }
 
     // Cloud masking function

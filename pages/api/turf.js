@@ -11,14 +11,9 @@ import * as turf from '@turf/turf';
 
 // Export default function
 export default function handler(req, res) {
-    let geojson = JSON.parse(req.body);
-    let centroid = turf.centroid(geojson);
-    let coord = centroid.geometry.coordinates;
-
-    let lat = coord[1];
-    let lng = coord[0];
-
-    res.statusCode = 200;
-    res.send( {lat, lng} );
-    res.end();
+    new Promise((resolve, reject) => resolve(req.body))
+        .then(geojson => turf.centroid(geojson))
+        .then(centroid => centroid.geometry.coordinates)
+        .then(coord => res.status(200).send({ lat: coord[1], lng: coord[0] }))
+        .catch(err => res.status(404).send({ message: err }))
 }
