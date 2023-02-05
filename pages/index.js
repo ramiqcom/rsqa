@@ -390,16 +390,15 @@ function AOISection() {
     setUploadGeoJSON('none');
     setUploadKML('none');
 
-    if (Draw){
-      Draw.remove();
-    }
+		// Delete controls
+    draw(false);
 
     switch (value) {
       case 'Shapefile (zip)':
         setUploadSHP('inline');
         break;
       case 'Draw AOI':
-        Draw.addTo(Map);
+        draw(true);
         break;
       case 'GeoJSON':
         setUploadGeoJSON('inline');
@@ -603,7 +602,6 @@ function DateSlider() {
     const value = event.target.value;
     setDoy2(value);
     setMax(value);
-    console.log(value);
   }
 
   useEffect(() => {
@@ -835,7 +833,7 @@ function leafletMap () {
 	// Function to start map
 	function startMap (center) {
 		// Import leaflet draw package
-		require('leaflet-draw');
+		require('@geoman-io/leaflet-geoman-free');
 
 		// Initialize Map
 		Map = L.map('map', {
@@ -847,9 +845,10 @@ function leafletMap () {
 		});
 
 		// Basemap
-		L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-      attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
-    }).addTo(Map);
+		L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+			maxZoom: 19,
+			attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://www.hotosm.org/" target="_blank">Humanitarian OpenStreetMap Team</a> hosted by <a href="https://openstreetmap.fr/" target="_blank">OpenStreetMap France</a>'
+		}).addTo(Map);
 
 		// Data layer for AOI
 		Data = L.geoJSON([], {
@@ -860,30 +859,25 @@ function leafletMap () {
 
 		// Tile layer
 		Tile = L.featureGroup().addTo(Map);
+	}
+}
 
-		// Create control draw
-		Draw = new L.Control.Draw({
-      edit: {
-        featureGroup: Data,
-      },
-      draw: {
-        marker: false,
-        polyline: false,
-        circlemarker: false
-      }
-    }).addTo(Map)
-		
-		// Event when draw is created
-    Map.on('draw:created', event => {
-      Data.addLayer(event.layer);
-    });
-  
-		// Event when draw is deleted
-    Map.on('draw:deleted', event => {
-      if (Object.keys(Data.getLayers()).length) {
-      } else {
-      };
-    });
+// Drawing manager
+function draw (status) {
+	if (status) {
+		Map.pm.addControls({
+			drawCircleMarker: false,
+			drawPolyline: false,
+			drawMarker: false,
+		});
+
+		Map.on('pm:create', event => {
+			Data.addLayer(event.layer);
+			showButtonStatus(false);
+		});
+		Map.on('pm:remove', event => showButtonStatus(true));
+	} else {
+		Map.pm.removeControls();
 	}
 }
 
@@ -914,7 +908,7 @@ function showImage(){
       break;
     default:
 			try {
-				eeDataFetch(Data);
+				eeDataFetch(Data.toGeoJSON());
 			} catch (err) {
 				alert(err);
 			};
@@ -944,7 +938,6 @@ function showImage(){
 		try {
 			const response = await fetch('/api/image', options);
 			const result = await response.json();
-			console.log(result);
 			eeTileToMap(result, geojson);
 		} catch (err) {
 			alert(err);
@@ -963,9 +956,6 @@ function showImage(){
 
 // EE tile to map
 function eeTileToMap(data, geojson){
-	// Import leaflet module
-	const L = require('leaflet');
-
   // Create a new tile source to fetch visible tiles on demand and displays them on the map.
   const image = L.tileLayer(data.urlFormat).addTo(Tile);
 
@@ -1091,7 +1081,7 @@ function clickValues(status) {
 }
 
 // Show SHP to map button
-function showSHP(){
+async function showSHP(){
   const body = new FormData();
   body.append("file", SHPFile);
 
@@ -1100,28 +1090,37 @@ function showSHP(){
     body: body
   };
 
-	// Fetch geojson from shapefile
-  fetch('/api/shp', options)
-    .then(response => response.json())
-    .then(geojson => toMap(geojson))
-		.catch(err => alert(err));
+	// Fetch shapefile to geojson
+	try {
+		const response = await fetch('/api/shp', options);
+		const geojson = await response.json();
+		toMap(geojson);
+	} catch (err) {
+		alert(err);
+	};
 }
 
 // Show KML file to map
-function showKML(){
-  new Promise(resolve => resolve(KMLFile.text()))
-    .then(text => new DOMParser().parseFromString(text, 'application/xml'))
-    .then(xml => kml(xml))
-    .then(geojson => toMap(geojson))
-    .catch(err => alert(err))
+async function showKML(){
+	try {
+		const text = await KMLFile.text();
+		const xml = new DOMParser().parseFromString(text, 'application/xml')
+		const geojson = kml(xml);
+		toMap(geojson);
+	} catch (err) {
+		alert(err);
+	};
 }
 
 // Show KML file to map
-function showGeoJSON(){
-  new Promise(resolve => resolve(GeoJSONFile.text()))
-    .then(text => JSON.parse(text))
-    .then(geojson => toMap(geojson))
-    .catch(err => alert(err))
+async function showGeoJSON(){
+	try {
+		const text = await GeoJSONFile.text();
+		const geojson = JSON.parse(text);
+		toMap(geojson);
+	} catch (err) {
+		alert(err);
+	};
 }
 
 // Function to show added geo data to map
@@ -1135,7 +1134,7 @@ function toMap(geojson){
   simplify = simplify.features.length > 1 ? simplify = turf.dissolve(simplify) : simplify;
 
   // Add json layer to Data
-  L.geoJSON(simplify).addTo(Data);
+  Data.addData(simplify);
 
 	// Get feature centroid
 	const centroid = turf.centroid(simplify).geometry.coordinates;
@@ -1153,7 +1152,7 @@ function removeAoi(type=null) {
     showButtonStatus(false);
   } else {
     showButtonStatus(true);
-  }
+  };
 
   // Remove every feature in Map
   Data.clearLayers();
