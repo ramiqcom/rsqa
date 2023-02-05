@@ -2,7 +2,7 @@
 import ee from '@google/earthengine';
 
 // Earth engine app
-export default function handler(req, res){
+export default function handler (req, res) {
 	const privateKey = JSON.parse(process.env.EE_KEY);
     
 	// Authentication
