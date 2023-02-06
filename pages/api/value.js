@@ -31,7 +31,7 @@ export default function handler (req, res) {
 		const image = ee.Image(ee.Deserializer.fromCloudApiJSON(json.image));
 		const reduce = image.reduceRegion({
 			geometry: point,
-			scale: 10,
+			scale: image.projection().nominalScale(),
 			reducer: ee.Reducer.first(),
 		});
 

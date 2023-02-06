@@ -31,6 +31,7 @@ let cloudMasking;
 let bandRed;
 let bandGreen;
 let bandBlue;
+let colLabel;
 
 // App variables
 let setBandsList;
@@ -203,7 +204,7 @@ function ValuesChart(props){
 
 	const data = [['Band', 'Value']];
 	for (const [key, value] of Object.entries(dict)){
-		data.push([key, value/10000]);
+		data.push([key, value]);
 	}
 
 	const options = {
@@ -304,8 +305,9 @@ function Collection() {
 	];
 
 	function changeCol(event){
-		const status = event.value;
+		setCol(event);
 
+		const status = event.value;
 		switch (status) {
 			case 'sentinel2':
 				setBandsList([
@@ -320,7 +322,7 @@ function Collection() {
 					{ value: 'B8A', label: 'B8A' },
 					{ value: 'B9', label: 'B9' },
 					{ value: 'B11', label: 'B11' },
-					{ value: 'B10', label: 'B10' }
+					{ value: 'B12', label: 'B12' }
 				]);
 				setBandRed({ value: 'B8', label: 'B8' });
 				setBandGreen({ value: 'B11', label: 'B11' });
@@ -373,6 +375,7 @@ function Collection() {
 
 	useEffect(() => {
 		imageCol = col.value;
+		colLabel = col.label;
 	});
 
 	return (
@@ -381,7 +384,7 @@ function Collection() {
 			placeholder='Select imagery collection'
 			style={{ textAlign: 'center', width: '100%' }}
 			className='action'
-			defaultValue={col}
+			value={col}
 			onChange={changeCol}
 		/>
 	)
@@ -411,13 +414,13 @@ function AOISection() {
 
 	// Change AOI function
 	function changeAOI(event) {
+		// Set selected value of AOI
+		setAoiStatus(event);
+
 		const status = event.value;
 
-		// Set selected value of AOI
-		setAoiStatus(value);
-
 		// Delete all current AOI
-		removeAoi(value);
+		removeAoi(status);
 
 		// Set upload section to hide
 		setUploadSHP('none');
@@ -427,7 +430,7 @@ function AOISection() {
 		// Delete controls
 		draw(false);
 
-		switch (value) {
+		switch (status) {
 			case 'shp':
 				setUploadSHP('inline');
 				break;
@@ -454,7 +457,7 @@ function AOISection() {
 					onChange={changeAOI}
 					placeholder='Select AOI option'
 					style={{ textAlign: 'center', width: '100%' }}
-					defaultValue={aoiStatus}
+					value={aoiStatus}
 					className='action'
 				/>
 
@@ -836,15 +839,15 @@ function Visualization(){
 			<div className='column' style={{ justifyContent: 'space-between' }}>
 
 				<div>
-					<Select options={bands} placeholder='Select band' value={red} className='action' />
+					<Select options={bands} placeholder='Select band' value={red} onChange={setRed} className='action' />
 				</div>
 
 				<div>
-					<Select options={bands} placeholder='Select band' value={green} className='action' />
+					<Select options={bands} placeholder='Select band' value={green} onChange={setGreen} className='action' />
 				</div>
 
 				<div>
-					<Select options={bands} placeholder='Select band' value={blue} className='action' />
+					<Select options={bands} placeholder='Select band' value={blue} onChange={setBlue} className='action' />
 				</div>
 
 			</div>
@@ -1043,7 +1046,7 @@ function Info(props){
 			</div>
 
 			<div className='info'>
-				Collection: {imageCol}
+				Collection: {colLabel}
 			</div>
 
 			<div className='info'>
@@ -1178,7 +1181,7 @@ function toMap(geojson){
 
 // Remove all AOI function
 function removeAoi(type=null) {
-	if (type == 'Map bounds' || geomType == 'Map bounds'){
+	if (type == 'bounds' || geomType == 'bounds'){
 		showButtonStatus(false);
 	} else {
 		showButtonStatus(true);
