@@ -596,6 +596,18 @@ function DateSlider() {
 	const [dateStart, setDateStart] = useState('2022-01-01');
 	const [dateEnd, setDateEnd] = useState(ymd);
 
+	// Show and hide calendar
+	const [show, setShow] = useState('inline');
+
+	// DOY
+	const [doy1, setDoy1] = useState(1);
+	const [doy2, setDoy2] = useState(365);
+	const [max, setMax] = useState(365);
+	const [min, setMin] = useState(1);
+
+	// Date check
+	const [dateCheck, setCheck] = useState(true);
+
 	function startChange(data){
 		const status = data.target.value;
 		setDateStart(status);
@@ -606,9 +618,6 @@ function DateSlider() {
 		setDateEnd(status);
 	}
 
-	// Date check
-	const [dateCheck, setCheck] = useState(true);
-
 	// On change check function
 	function checkChange(data){
 		const status = data.target.checked;
@@ -617,18 +626,13 @@ function DateSlider() {
 		if(status == true){
 			setShow('inline');
 		} else {
-			setShow('none')
-		}
+			setShow('none');
+			setDateStart('1970-01-01')
+			setDateEnd(ymd);
+			setDoy1(1);
+			setDoy2(365);
+		};
 	}
-
-	// Show and hide calendar
-	const [show, setShow] = useState('inline');
-
-	// DOY
-	const [doy1, setDoy1] = useState(1);
-	const [doy2, setDoy2] = useState(365);
-	const [max, setMax] = useState(365);
-	const [min, setMin] = useState(1);
 
 	function doyChange1(event) {
 		const value = event.target.value;
@@ -642,15 +646,9 @@ function DateSlider() {
 	}
 
 	useEffect(() => {
-		if (dateCheck === false){
-			startDate = '1970-01-01';
-			endDate= ymd;
-			dateRangePair = [1, 365];
-		} else {
-			startDate = dateStart;
-			endDate= dateEnd;
-			dateRangePair = [doy1, doy2];
-		}
+		startDate = dateStart;
+		endDate= dateEnd;
+		dateRangePair = [doy1, doy2];
 	})
 
 	return (

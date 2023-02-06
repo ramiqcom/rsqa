@@ -73,7 +73,18 @@ export default function handler (req, res) {
 				scaling = 0.0000275;
 				offset = -0.02;
 				imageScale = 30;
-				col = collection(colId[0]);
+				col = collection(colId[0]).merge(collection(colId[1]));
+				break;
+			case 'landsatTm':
+				colId = ['LANDSAT/LT04/C02/T1_L2', 'LANDSAT/LT05/C02/T1_L2', 'LANDSAT/LE07/C02/T1_L2'];
+				cloudParam = 'CLOUD_COVER';
+				cloudMaskFunction = cloudMaskLandsatTm;
+				bandsList = ['SR_B.*'];
+				newBandsList = ['B1', 'B2', 'B3', 'B4', 'B5', 'B7'];
+				scaling = 0.0000275;
+				offset = -0.02;
+				imageScale = 30;
+				col = collection(colId[0]).merge(collection(colId[1])).merge(collection(colId[2]));
 				break;
 		};
 
@@ -94,7 +105,6 @@ export default function handler (req, res) {
 
 		// Send image parameter to client
 		try {
-			// send image to client
 			vis.evaluate(vis => image.getMap(vis, async (map) => {
 				map.image = await ee.Serializer.toCloudApiJSON(image);
 				res.status(200).send(map);
@@ -133,6 +143,18 @@ export default function handler (req, res) {
 		const shadow = 1 << 4;
 		const mask = qa.bitwiseAnd(dilated).eq(0)
 			.and(qa.bitwiseAnd(cirrus).eq(0))
+			.and(qa.bitwiseAnd(cloud).eq(0))
+			.and(qa.bitwiseAnd(shadow).eq(0));
+		return image.updateMask(mask);
+	}
+
+	// Cloud mask for landsat tm collection
+	function cloudMaskLandsatTm(image){
+		const qa = image.select('QA_PIXEL');
+		const dilated = 1 << 1;
+		const cloud = 1 << 3;
+		const shadow = 1 << 4;
+		const mask = qa.bitwiseAnd(dilated).eq(0)
 			.and(qa.bitwiseAnd(cloud).eq(0))
 			.and(qa.bitwiseAnd(shadow).eq(0));
 		return image.updateMask(mask);
