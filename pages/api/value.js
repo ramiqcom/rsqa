@@ -10,14 +10,14 @@ export default function handler (req, res) {
 		privateKey, () => {
 		console.log('Authentication success');
 		ee.initialize(
-			null, 
-			null, 
+			null,
+			null,
 			() => {
 			console.log('Initialization success');
 			init();
 			},
 		(err) => console.log(err));
-		}, 
+		},
 		(err) => console.log(err)
 	);
 

@@ -4,20 +4,20 @@ import ee from '@google/earthengine';
 // Earth engine app
 export default function handler (req, res) {
 	const privateKey = JSON.parse(process.env.EE_KEY);
-    
+
 	// Authentication
 	ee.data.authenticateViaPrivateKey(
 		privateKey, () => {
 		console.log('Authentication success');
 		ee.initialize(
-			null, 
-			null, 
+			null,
+			null,
 			() => {
 			console.log('Initialization success');
 			init();
 			},
 		(err) => console.log(err));
-		}, 
+		},
 		(err) => console.log(err)
 	);
 
@@ -42,6 +42,9 @@ export default function handler (req, res) {
 
 		// Image compositing
 		try {
+
+
+
 			// Image collection
 			let col = ee.ImageCollection("COPERNICUS/S2_SR")
 				.filter(ee.Filter.and(
@@ -50,10 +53,10 @@ export default function handler (req, res) {
 					ee.Filter.dayOfYear(startRange, endRange),
 					ee.Filter.lte('CLOUDY_PIXEL_PERCENTAGE', cloudFilter))
 				);
-			
+
 			// Cloud masking
 			col = cloudMasking ? col.map(cloudMask) : col;
-			
+
 			// Image
 			const image = col.median()
 				.select(['B.*'])
@@ -63,16 +66,16 @@ export default function handler (req, res) {
 
 			// Visualization parameter
 			const vis = mapVis(image, [red, green, blue]);
-			
+
 			// send image to client
-			vis.evaluate(vis => image.getMap(vis, map => {
-				map.image = ee.Serializer.toCloudApiJSON(image);
+			vis.evaluate(vis => image.getMap(vis, async (map) => {
+				map.image = await ee.Serializer.toCloudApiJSON(image);
 				res.status(200).send(map);
 			}));
 		} catch (err) {
 			res.status(404).send(err);
 		};
-			
+
 	}
 
 	// Cloud masking function
