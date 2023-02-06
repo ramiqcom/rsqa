@@ -35,6 +35,11 @@ export default function handler (req, res) {
 			reducer: ee.Reducer.first(),
 		});
 
-		reduce.evaluate(values => res.status(202).send(values));
+		try {
+			reduce.evaluate(values => res.status(202).send(values));
+		} catch (err) {
+			res.status(404).send(err);
+		};
+		
 	}
 }

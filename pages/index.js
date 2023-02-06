@@ -397,7 +397,7 @@ function AOISection() {
 	const options = [
 		{ label: 'Map bounds', value: 'bounds' },
 		{ label: 'Draw AOI', value: 'draw' },
-		{ label: 'Shapfile (zip)', value: 'shp' },
+		{ label: 'Shapefile (zip)', value: 'shp' },
 		{ label: 'GeoJSON', value: 'geojson' },
 		{ label: 'KML', value: 'kml' }
 	]
@@ -854,6 +854,70 @@ function Visualization(){
 	)
 }
 
+// Layers info
+function Info(props){
+	const image = props.tile;
+	const aoi = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(props.aoi));
+
+	const [check, setCheck] = useState(true);
+
+	function onChange(event){
+		const status = event.target.checked;
+		setCheck(status);
+
+		if(status == true){
+			image.setOpacity(1);
+		} else {
+			image.setOpacity(0);
+		}
+	}
+
+	return (
+		<div style={{ border: '1px solid black', fontSize: 'small', width: '100%' }}>
+
+			<div style={{ borderBottom: '1px solid black' }}>
+				<Checkbox label={'Image' + ' ' + props.number} checked={check} onChange={onChange}/>
+			</div>
+
+			<div className='info'>
+				Collection: {colLabel}
+			</div>
+
+			<div className='info'>
+				Date: {startDate} - {endDate}
+			</div>
+
+			<div className='info'>
+				DOY: {dateRangePair[0]} - {dateRangePair[1]}
+			</div>
+
+			<div className='info'>
+				Cloud filter: {'<= ' + cloudFilter + '%'}
+			</div>
+
+			<div className='info'>
+				Cloud masking: {cloudMasking.toString()}
+			</div>
+
+			<div className='info'>
+				Visualization: {bandRed + '-' + bandGreen + '-' + bandBlue}
+			</div>
+
+			<div className='info'>
+				XYZ tile:
+				<input type='text' value={props.data.urlFormat} readOnly={true} style={{ width: '100%' }} />
+			</div>
+
+			<div className='info'>
+				<OpenLink href={aoi} download='aoi.geojson'>
+					<button style={{ width: '100%' }}>Download AOI</button>
+				</OpenLink>
+			</div>
+
+		</div>
+	)
+}
+
 // ** Components ** //
 
 
@@ -1016,70 +1080,6 @@ function eeTileToMap(data, geojson){
 
 	// Set image as global var
 	Composite = data.image;
-}
-
-// Layers info
-function Info(props){
-	const image = props.tile;
-	const aoi = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(props.aoi));
-
-	const [check, setCheck] = useState(true);
-
-	function onChange(event){
-		const status = event.target.checked;
-		setCheck(status);
-
-		if(status == true){
-			image.setOpacity(1);
-		} else {
-			image.setOpacity(0);
-		}
-	}
-
-	return (
-		<div style={{ border: '1px solid black', fontSize: 'small', width: '100%' }}>
-
-			<div style={{ borderBottom: '1px solid black' }}>
-				<Checkbox label={'Image' + ' ' + props.number} checked={check} onChange={onChange}/>
-			</div>
-
-			<div className='info'>
-				Collection: {colLabel}
-			</div>
-
-			<div className='info'>
-				Date: {startDate} - {endDate}
-			</div>
-
-			<div className='info'>
-				DOY: {dateRangePair[0]} - {dateRangePair[1]}
-			</div>
-
-			<div className='info'>
-				Cloud filter: {'<= ' + cloudFilter + '%'}
-			</div>
-
-			<div className='info'>
-				Cloud masking: {cloudMasking.toString()}
-			</div>
-
-			<div className='info'>
-				Visualization: {bandRed + '-' + bandGreen + '-' + bandBlue}
-			</div>
-
-			<div className='info'>
-				XYZ tile:
-				<input type='text' value={props.data.urlFormat} readOnly={true} style={{ width: '100%' }} />
-			</div>
-
-			<div className='info'>
-				<OpenLink href={aoi} download='aoi.geojson'>
-					<button style={{ width: '100%' }}>Download AOI</button>
-				</OpenLink>
-			</div>
-
-		</div>
-	)
 }
 
 // Set click function
