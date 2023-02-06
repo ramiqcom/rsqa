@@ -6,6 +6,7 @@ import Script from 'next/script';
 import { kml } from '@tmcw/togeojson';
 import * as turf from '@turf/turf';
 import { Chart } from "react-google-charts";
+import Select from 'react-select';
 
 // Import css
 import './_app';
@@ -16,7 +17,6 @@ import './_app';
 let Map;
 let Data;
 let Tile;
-let Draw;
 
 // AOI type
 let geomType;
@@ -54,27 +54,6 @@ let Composite;
 
 
 // ** Helper component ** //
-
-// Dropdown class
-function Select(props) {
-  const [items, setItems] = useState(props.items);
-
-  useEffect(() => {
-
-  })
-
-  return (
-
-    <select className={props.className} id={props.id} style={props.style} onChange={props.onChange} defaultValue={props.selected}>
-    
-      <option value="" disabled >{props.placeholder}</option>
-      {
-        items.map((object, i) => <option value={object} key={i}> {object} </option>)
-      }
-    </select>
-
-  );
-}
 
 // Checkbox class
 function Checkbox(props) {
@@ -194,22 +173,24 @@ function Layer() {
   }, []);
 
   return (
-    <div style={{ width: '10%', margin: '1%' }}>
+    <div id='leftpanel' className='panel'>
 
-      <div style={{ fontSize: 'large', margin: '1% auto 5%', textAlign: 'center' }}>
-        Layers
-      </div>
+      <div className='section'>
+        <div style={{ fontSize: 'large', margin: '1% auto 5%', textAlign: 'center' }}>
+          Layers
+        </div>
 
-      <div style={{ fontWeight: 'bold', color: 'blue', fontSize: 'large', textAlign: 'center', display: show }}>
-        Loading...
-      </div>
+        <div style={{ fontWeight: 'bold', color: 'blue', fontSize: 'large', textAlign: 'center', display: show }}>
+          Loading...
+        </div>
 
-      <div id='layerlist' />
+        <div id='layerlist' />
 
-      <div style={{ color: 'blue', display: value, margin: '20% auto auto' }}>Click the image to get values!</div>
+        <div style={{ color: 'blue', display: value, marginTop: '10%' }}>Click the image to get values!</div>
 
-      <div style={{ display: chartShow }}>
-        <ValuesChart data={chartData}/>
+        <div style={{ display: chartShow }}>
+          <ValuesChart data={chartData}/>
+        </div>
       </div>
 
     </div>
@@ -253,7 +234,8 @@ function ValuesChart(props){
 // Map section
 function Box() {
   return (
-    <div id='map' style={{ width: '70%', height: '100%' }}>
+    <div id='mainpanel'>
+      <div id='map' />
     </div>
   )
 }
@@ -278,20 +260,23 @@ function App() {
   }
 
   return (
-    <div id='app' style={{ width: '16%' }}>
+    <div id='rightpanel' className='panel'>
 
-      <div style={{ margin: '8%', width: '100%' }}>
+      <div className='section'>
 
-        <div id='title' style={{ fontSize: 'xx-large', fontWeight: '400', color: 'navy', margin: 'auto auto 5%' }}>
+        <div id='title' style={{ fontSize: 'xx-large', fontWeight: '400', color: 'navy', marginBottom: '5%' }}>
           Remote Sensing Quick Analysis v.0.3
         </div>
 
         <Collection />
         <AOISection />
-        <DateSlider />
-        <CloudSection />
-        <Preprocessing />
-        <Visualization />
+
+        <div style={{ border: '0.5px solid black' }}>
+          <DateSlider />
+          <CloudSection />
+          <Preprocessing />
+          <Visualization />
+        </div>
 
         <button style={{ width: '100%', margin: '5% auto auto', color: 'green' }} disabled={disabled} onClick={showImage} className='action'>
             Show image
@@ -309,52 +294,94 @@ function App() {
 
 // Collection section
 function Collection() {
-  const [col, setCol] = useState('Sentinel-2');
+  const [col, setCol] = useState({ label: 'Sentinel-2', value: 'sentinel2' });
 
-  function changeCol(data){
-    const status = data.target.options[data.target.selectedIndex].text;
+  const options = [
+    { label: 'Sentinel-2', value: 'sentinel2' },
+    { label: 'Landsat OLI', value: 'landsatOli' },
+    { label: 'Landsat TM & ETM+', value: 'landsatTm' },
+    { label: 'Planetscope', value: 'planetscope' }
+  ];
 
-    setCol(status);
+  function changeCol(event){
+    const status = event.value;
 
     switch (status) {
-      case 'Sentinel-2':
-        setBandsList(['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B9', 'B11', 'B12']);
-        setBandRed('B8');
-        setBandGreen('B11');
-        setBandBlue('B2');
+      case 'sentinel2':
+        setBandsList([
+          { value: 'B1', label: 'B1' },
+          { value: 'B2', label: 'B2' },
+          { value: 'B3', label: 'B3' },
+          { value: 'B4', label: 'B4' },
+          { value: 'B5', label: 'B5' },
+          { value: 'B6', label: 'B6' },
+          { value: 'B7', label: 'B7' },
+          { value: 'B8', label: 'B8' },
+          { value: 'B8A', label: 'B8A' },
+          { value: 'B9', label: 'B9' },
+          { value: 'B11', label: 'B11' },
+          { value: 'B10', label: 'B10' }
+        ]);
+        setBandRed({ value: 'B8', label: 'B8' });
+        setBandGreen({ value: 'B11', label: 'B11' });
+        setBandBlue({ value: 'B2', label: 'B2' });
         break;
-      case 'Landsat OLI':
-        setBandsList(['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7']);
-        setBandRed('B5');
-        setBandGreen('B6');
-        setBandBlue('B2');
+      case 'landsatOli':
+        setBandsList([
+          { value: 'B1', label: 'B1' },
+          { value: 'B2', label: 'B2' },
+          { value: 'B3', label: 'B3' },
+          { value: 'B4', label: 'B4' },
+          { value: 'B5', label: 'B5' },
+          { value: 'B6', label: 'B6' },
+          { value: 'B7', label: 'B7' },
+        ]);
+        setBandRed({ value: 'B5', label: 'B5' });
+        setBandGreen({ value: 'B6', label: 'B6' });
+        setBandBlue({ value: 'B2', label: 'B2' });
         break;
-      case 'Landsat TM & ETM':
-        setBandsList(['B1', 'B2', 'B3', 'B4', 'B5', 'B7']);
-        setBandRed('B4');
-        setBandGreen('B5');
-        setBandBlue('B1');
+      case 'landsatTm':
+        setBandsList([
+          { value: 'B1', label: 'B1' },
+          { value: 'B2', label: 'B2' },
+          { value: 'B3', label: 'B3' },
+          { value: 'B4', label: 'B4' },
+          { value: 'B5', label: 'B5' },
+          { value: 'B7', label: 'B7' }
+        ]);
+        setBandRed({ value: 'B4', label: 'B4' });
+        setBandGreen({ value: 'B5', label: 'B5' });
+        setBandBlue({ value: 'B1', label: 'B1' });
         break;
-      case 'Planetscope':
-        setBandsList(['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8']);
-        setBandRed('B6');
-        setBandGreen('B7');
-        setBandBlue('B8');
+      case 'planetscope':
+        setBandsList([
+          { value: 'B1', label: 'B1' },
+          { value: 'B2', label: 'B2' },
+          { value: 'B3', label: 'B3' },
+          { value: 'B4', label: 'B4' },
+          { value: 'B5', label: 'B5' },
+          { value: 'B6', label: 'B6' },
+          { value: 'B7', label: 'B7' },
+          { value: 'B8', label: 'B8' }
+        ]);
+        setBandRed({ value: 'B8', label: 'B8' });
+        setBandGreen({ value: 'B7', label: 'B7' });
+        setBandBlue({ value: 'B2', label: 'B2' });
         break;
-    }
+    };
   }
 
   useEffect(() => {
-    imageCol = col;
-  })
+    imageCol = col.value;
+  });
 
   return (
     <Select
-      items={['Sentinel-2', 'Landsat OLI', 'Landsat TM & ETM', 'Planetscope']}
+      options={options}
       placeholder='Select imagery collection'
       style={{ textAlign: 'center', width: '100%' }}
       className='action'
-      selected={col}
+      defaultValue={col}
       onChange={changeCol}
     />
   )
@@ -363,7 +390,14 @@ function Collection() {
 // AOI section
 function AOISection() {
   // AOI status select value
-  const [aoiStatus, setAoiStatus] = useState('Map bounds');
+  const [aoiStatus, setAoiStatus] = useState({ label: 'Map bounds', value: 'bounds' });
+  const options = [
+    { label: 'Map bounds', value: 'bounds' },
+    { label: 'Draw AOI', value: 'draw' },
+    { label: 'Shapfile (zip)', value: 'shp' },
+    { label: 'GeoJSON', value: 'geojson' },
+    { label: 'KML', value: 'kml' }
+  ]
 
   // Upload section show
   const [uploadSHP, setUploadSHP] = useState('none');
@@ -372,12 +406,12 @@ function AOISection() {
 
   // Default useeffect function
   useEffect(() => {
-    geomType = aoiStatus;
-  })
+    geomType = aoiStatus.value;
+  });
 
   // Change AOI function
   function changeAOI(event) {
-    const value = event.target.value;
+    const status = event.value;
 
     // Set selected value of AOI
     setAoiStatus(value);
@@ -394,16 +428,16 @@ function AOISection() {
     draw(false);
 
     switch (value) {
-      case 'Shapefile (zip)':
+      case 'shp':
         setUploadSHP('inline');
         break;
-      case 'Draw AOI':
+      case 'draw':
         draw(true);
         break;
-      case 'GeoJSON':
+      case 'geojson':
         setUploadGeoJSON('inline');
         break;
-      case 'KML':
+      case 'kml':
         setUploadKML('inline');
         break;
     };
@@ -416,11 +450,11 @@ function AOISection() {
       <div>
 
         <Select
-          items={['Draw AOI', 'Shapefile (zip)', 'KML', 'GeoJSON', 'Map bounds']} 
+          options={options} 
           onChange={changeAOI} 
           placeholder='Select AOI option'
           style={{ textAlign: 'center', width: '100%' }}
-          selected={aoiStatus}
+          defaultValue={aoiStatus}
           className='action'
         />
 
@@ -437,7 +471,7 @@ function AOISection() {
       <button 
         type='button'
         className='action'
-        style={{ width: '100%', color: 'red', margin: '2% auto'}}
+        style={{ width: '100%', color: 'red', margin: '2% auto' }}
         onClick={removeAoi}
       >
           Remove AOI
@@ -627,7 +661,7 @@ function DateSlider() {
 
       <div style={{ display: show }}>
         
-        <div style={{ width: '100%', textAlign: 'justify' }} className='column'>
+        <div style={{ width: '100%', justifyContent: 'space-between' }} className='column'>
 
           <div style={{ marginRight: 'auto', width: '20%', textAlign: 'left' }}>
             Start
@@ -643,7 +677,7 @@ function DateSlider() {
 
         </div>
 
-        <div style={{ width: '100%' }} className='column'>
+        <div style={{ width: '100%', justifyContent: 'space-between' }} className='column'>
 
           <div style={{ marginRight: 'auto', textAlign: 'left', width: '100%' }}>
             <input type="date" value={dateStart} onChange={startChange} />
@@ -765,34 +799,33 @@ function Preprocessing(){
 
 // Band visualization
 function Visualization(){
-  const [bands, setBands] = useState(['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B9', 'B11', 'B12']);
-  const [red, setRed] = useState('B8');
-  const [green, setGreen] = useState('B11');
-  const [blue, setBlue] = useState('B2');
+  const [bands, setBands] = useState([
+		{ value: 'B1', label: 'B1' },
+		{ value: 'B2', label: 'B2' },
+		{ value: 'B3', label: 'B3' },
+    { value: 'B4', label: 'B4' },
+    { value: 'B5', label: 'B5' },
+    { value: 'B6', label: 'B6' },
+    { value: 'B7', label: 'B7' },
+    { value: 'B8', label: 'B8' },
+    { value: 'B8A', label: 'B8A' },
+    { value: 'B9', label: 'B9' },
+    { value: 'B11', label: 'B11' },
+    { value: 'B10', label: 'B10' }
+	]);
 
-  function changeRed(data){
-    const status = data.target.options[data.target.selectedIndex].text;
-    setRed(status);
-  }
-
-  function changeGreen(data){
-    const status = data.target.options[data.target.selectedIndex].text;
-    setGreen(status);
-  }
-
-  function changeBlue(data){
-    const status = data.target.options[data.target.selectedIndex].text;
-    setBlue(status);
-  }
+  const [red, setRed] = useState({ value: 'B8', label: 'B8' });
+  const [green, setGreen] = useState({ value: 'B11', label: 'B11' });
+  const [blue, setBlue] = useState({ value: 'B2', label: 'B2' });
 
   useEffect(() => {
     setBandsList = setBands;
     setBandRed = setRed;
     setBandGreen = setGreen;
     setBandBlue = setBlue;
-    bandRed = red;
-    bandGreen = green;
-    bandBlue = blue;
+    bandRed = red.value;
+    bandGreen = green.value;
+    bandBlue = blue.value;
   }, [red, green, blue]);
 
   return (
@@ -800,18 +833,20 @@ function Visualization(){
       
       <div style={{ fontWeight: 'bold' }}>Visualization</div>
       
-      <div className='column'>
+      <div className='column' style={{ justifyContent: 'space-between' }}>
+
         <div>
-          <Select items={bands} placeholder='Select band' selected={red} onChange={changeRed} className='action' />
+          <Select options={bands} placeholder='Select band' value={red} className='action' />
         </div>
 
         <div>
-          <Select items={bands} placeholder='Select band' selected={green} onChange={changeGreen} className='action' />
+          <Select options={bands} placeholder='Select band' value={green} className='action' />
         </div>
 
         <div>
-          <Select items={bands} placeholder='Select band' selected={blue} onChange={changeBlue} className='action' />
+          <Select options={bands} placeholder='Select band' value={blue} className='action' />
         </div>
+
       </div>
     
     </div>
@@ -896,7 +931,7 @@ function showImage(){
   Tile.clearLayers();
 
   switch (geomType) {
-    case 'Map bounds':
+    case 'bounds':
 			try {
 				const bounds = Map.getBounds();
 				const polygon = turf.bboxPolygon([bounds.getEast(), bounds.getSouth(), bounds.getWest(), bounds.getNorth()]);
@@ -933,7 +968,7 @@ function showImage(){
       headers: {
         'Content-Type': 'application/json'
       }
-    }
+    };
 		
 		try {
 			const response = await fetch('/api/image', options);
@@ -960,11 +995,11 @@ function eeTileToMap(data, geojson){
   const image = L.tileLayer(data.urlFormat).addTo(Tile);
 
 	// Loading screen event
-	Map.on('loading', () => {
+	image.on('loading', () => {
 		setLoadingScreen('block');
 	});
 
-	Map.on('load', () => {
+	image.on('load', () => {
 		setLoadingScreen('none');
 	});
 
@@ -1029,11 +1064,6 @@ function Info(props){
 
       <div className='info'>
         Visualization: {bandRed + '-' + bandGreen + '-' + bandBlue}
-      </div>
-
-      <div className='info'>
-        Map ID: 
-        <input type='text' value={props.data.mapid} readOnly={true} style={{ width: '100%' }} />
       </div>
 
       <div className='info'>
