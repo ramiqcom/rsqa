@@ -1,5 +1,5 @@
 // Import module
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import ReactDOM from 'react-dom/client';
 import Head from 'next/head';
 import Script from 'next/script';
@@ -34,6 +34,8 @@ let bandBlue;
 let colLabel;
 
 // App variables
+let setAdvPanel;
+let setBasicPanel;
 let setBandsList;
 let setBandRed;
 let setBandGreen;
@@ -41,6 +43,7 @@ let setBandBlue;
 let setLoadingScreen;
 let showButtonStatus;
 let showRemoveButton;
+let showAdvButton;
 let SHPFile;
 let KMLFile;
 let GeoJSONFile;
@@ -243,51 +246,172 @@ function Box() {
 
 // App panel
 function App() {
+	const [showBasic, setShowBasic] = useState('block');
+	const [showAdv, setShowAdv] = useState('none');
+
+	useState(() => {
+		setBasicPanel = setShowBasic;
+		setAdvPanel = setShowAdv;
+	});
+
+	return (
+		<div id='rightpanel' className='panel'>
+			<Basic style={{ display: showBasic }} />
+			<Advanced style={{ display: showAdv }} />
+		</div>
+	)
+}
+
+function Basic (props) {
 	const [disabled, setDisabled] = useState(false);
 	const [disableRemove, setDisabledRemove] = useState(true);
+	const [disableAdv, setDisableAdv] = useState(true);
 
 	useEffect(() => {
 		showButtonStatus = setDisabled;
 		showRemoveButton = setDisabledRemove;
+		showAdvButton = setDisableAdv;
 	}, []);
 
 	// Remove all tile
 	function removeTile() {
 		Tile.clearLayers();
 		setDisabledRemove(true);
+		showAdvButton(true);
 
 		// Delete click action
 		clickValues(false);
 	}
 
+	// Open advanced analysis button
+	function Adv() {
+		setAdvPanel('block');
+		setBasicPanel('none');
+	}
+
 	return (
-		<div id='rightpanel' className='panel'>
+		<div className='section' style={props.style}>
 
-			<div className='section'>
+			<div id='title' style={{ fontSize: 'xx-large', fontWeight: '400', color: 'navy', marginBottom: '5%' }}>
+				Remote Sensing Quick Analysis v.0.3
+			</div>
 
-				<div id='title' style={{ fontSize: 'xx-large', fontWeight: '400', color: 'navy', marginBottom: '5%' }}>
-					Remote Sensing Quick Analysis v.0.3
-				</div>
+			<Collection />
+			<AOISection />
 
-				<Collection />
-				<AOISection />
+			<div style={{ border: '0.5px solid black' }}>
+				<DateSlider />
+				<CloudSection />
+				<Preprocessing />
+				<Visualization />
+			</div>
 
-				<div style={{ border: '0.5px solid black' }}>
-					<DateSlider />
-					<CloudSection />
-					<Preprocessing />
-					<Visualization />
-				</div>
+			<button style={{ width: '100%', margin: '5% auto auto', color: 'green' }} disabled={disabled} onClick={showImage} className='action'>
+				Show image
+			</button>
 
-				<button style={{ width: '100%', margin: '5% auto auto', color: 'green' }} disabled={disabled} onClick={showImage} className='action'>
-						Show image
-				</button>
+			<button style={{ width: '100%', margin: '5% auto', color: 'red' }} disabled={disableRemove} onClick={removeTile} className='action'>
+				Remove image
+			</button>
 
-				<button style={{ width: '100%', margin: '5% auto', color: 'red' }} disabled={disableRemove} onClick={removeTile} className='action'>
-						Remove image
-				</button>
+			<button style={{ width: '100%', margin: '5% auto' }} className='action' disabled={disableAdv} onClick={Adv}>
+				Advanced Analysis
+			</button>
+
+		</div>
+	)
+}
+
+// Advanced analysis panel
+function Advanced (props) {
+	const options = [
+		{ label: 'Spectral Indices', value: 'indices' },
+		{ label: 'Principal Component Analysis', value: 'pca' }
+	];
+
+	const [indices, setIndices] = useState('block');
+	const [pca, setPca] = useState('none');
+
+	function advChange(event){
+		const status = event.value;
+
+		setPca('none');
+		setIndices('none');
+
+		switch(status){
+			case 'pca':
+				setPca('block');
+				break;
+			case 'indices':
+				setIndices('block');
+				break;
+		}
+	}
+
+	return (
+		<div className='section' style={props.style}>
+			
+			<div style={{ fontSize: 'x-large', fontWeight: 'bold' }}>
+				Advanced Analysis
+			</div>
+
+			<div>
+
+				<Select
+					options={options}
+					defaultValue={{ label: 'Spectral Indices', value: 'indices' }}
+					onChange={advChange}
+				/>
 
 			</div>
+
+			<Indices style={{ display: indices }}/>
+			<PCA style={{ display: pca }} />
+
+		</div>
+	)
+}
+
+// Spectral indices section
+function Indices (props) {
+	const [customShow, setCustomShow] = useState('none');
+
+	const options = [
+		{ value: 'ndvi', label: 'NDVI' },
+		{ value: 'ndwi', label: 'NDWI' },
+		{ value: 'ndbi', label: 'NDBI' },
+		{ value: 'custom', label: 'Custom' }
+	];
+
+	function indexChange(event) {
+		const status = event.value;
+		status == 'custom' ? setCustomShow('block') : setCustomShow('none');
+	}
+
+	return (
+		<div className='parameter' style={props.style}>
+
+			<div>
+			Spectral Indices
+			</div>
+
+			<Select
+				options={options}
+				value={{ value: 'ndvi', label: 'NDVI' }}
+				className='action'
+				onChange={indexChange}
+			/>
+
+			<input type='text' className='action' style={{ display: customShow, height: '100%', marginTop: '6%' }}>
+			</input>
+
+		</div>
+	)
+}
+
+function PCA (props) {
+	return (
+		<div style={props.style}>
 
 		</div>
 	)
@@ -781,7 +905,7 @@ function Preprocessing(){
 
 	useEffect(() => {
 		cloudMasking = cloudMask;
-	})
+	});
 
 	return (
 		<div className='section'>
@@ -834,7 +958,7 @@ function Visualization(){
 
 			<div style={{ fontWeight: 'bold' }}>Visualization</div>
 
-			<div className='column' style={{ justifyContent: 'space-between' }}>
+			<div className='column' style={{ justifyContent: 'space-between', marginBottom: '8%' }}>
 
 				<div>
 					<Select options={bands} placeholder='Select band' value={red} onChange={setRed} className='action' />
@@ -1045,6 +1169,9 @@ function showImage(){
 
 		// Allow to remove tile
 		showRemoveButton(false);
+
+		// Allow to do advanced analysis
+		showAdvButton(false);
 
 		// Remove AOI
 		removeAoi();
